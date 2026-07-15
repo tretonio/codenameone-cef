@@ -1,36 +1,44 @@
 name: Compilar CEF com Codecs Proprietários
 
 on:
-  workflow_dispatch: # Permite iniciar o build manualmente
+  workflow_dispatch: # Permite rodar manualmente pela aba Actions
 
 jobs:
   build-linux:
+    name: Compilar para Linux 64-bit
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout do código do seu repositório
-        uses: actions/checkout@v4
 
-      - name: Instalar Dependências do Linux
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      - name: Instalar Dependências
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential python3 bison flex ninja-build git-core curl zip unzip
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            libgtk-3-dev \
+            libgtkglext1-dev \
+            python3 \
+            python3-pip
+          
+          # Instala a biblioteca "six" necessária para os scripts internos de build do Chromium/gsutil
+          python3 -m pip install --break-system-packages six || python3 -m pip install six
 
       - name: Rodar o Build do Linux
         run: |
-          # Define as variáveis para garantir que o script baixe e prepare os codecs proprietários
+          # Define as variáveis para garantir que o script prepare os codecs proprietários
           export GN_DEFINES="proprietary_codecs=true ffmpeg_branding=\"Chrome\" is_official_build=true symbol_level=0"
           
-          # Dá permissão de execução e roda o script de build oficial do seu repositório
+          # Dá permissão de execução
           chmod +x ./build-linux.sh
-          ./build-linux.sh
+          
+          # Roda o script usando Bash
+          bash ./build-linux.sh
 
-      - name: Salvar os Arquivos Compilados (Artefatos)
-        uses: actions/upload-artifact@v4
+      - name: Upload do Artifact (Resultado)
+        uses: actions/upload-artifact@v3
         with:
-          name: cef-linux-x64-fixed
-          path: |
-            *.zip
-            *.tar.gz
-            **/libcef.so
-            **/*.pak
-            **/*.bin
+          name: cef-linux64-proprietario
+          path: dist/cef-linux64.zip
