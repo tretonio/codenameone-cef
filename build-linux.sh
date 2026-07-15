@@ -34,10 +34,16 @@ fi
 
 # Lê a versão correta do arquivo version.txt que criamos na raiz do projeto
 if [ -f "$SCRIPTPATH/version.txt" ]; then
-	export CEF_VERSION="cef_binary_$(cat $SCRIPTPATH/version.txt)"
+	export CEF_VERSION_RAW=$(cat $SCRIPTPATH/version.txt)
+	export CEF_VERSION="cef_binary_${CEF_VERSION_RAW}"
 else
-	export CEF_VERSION="cef_binary_84.4.1+gfdc7504+chromium-84.0.4147.105"
+	export CEF_VERSION_RAW="84.4.1+gfdc7504+chromium-84.0.4147.105"
+	export CEF_VERSION="cef_binary_${CEF_VERSION_RAW}"
 fi
+
+# Sobrescreve o arquivo de versão interno do repositório clonado para forçar a versão correta
+echo "${CEF_VERSION_RAW}" > ../version.txt
+echo "${CEF_VERSION_RAW}" > ./version.txt
 
 cd third_party/cef
 FILENAME=${CEF_VERSION}_linux64
@@ -55,7 +61,13 @@ fi
 cd ../..
 cd jcef_build
 
-cmake -G "Unix Makefiles" -DPROJECT_ARCH="$PROJECT_ARCH" -DCMAKE_BUILD_TYPE=Release ..
+# Executa o CMake passando o caminho exato (CEF_ROOT) e a versão correta para burlar o download automático interno
+cmake -G "Unix Makefiles" \
+      -DPROJECT_ARCH="$PROJECT_ARCH" \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCEF_ROOT="$SCRIPTPATH/java-cef/src/third_party/cef/${FILENAME}" \
+      -DCEF_VERSION="${CEF_VERSION_RAW}" ..
+
 make -j4
 
 cd ../tools
