@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 arch="64"
 if [ "$arch" != "64" ]; then
-	echo "Usage: sh build-linux.sh ARCH"
+	echo "Usage: bash build-linux.sh ARCH"
 	echo " ARCH = 32 or 64"
 	exit 1
 fi
@@ -17,7 +17,8 @@ if [ ! -d src ]; then
 fi
 cd src
 git pull origin master
-if [ "$1" == "clean" ]; then
+
+if [ "$1" = "clean" ]; then
 	rm -rf jcef_build
 fi
 if [ ! -d jcef_build ]; then
@@ -31,18 +32,24 @@ if [ "$arch" = "64" ]; then
 	PROJECT_ARCH="x86_64"
 fi
 
-#https://drive.google.com/file/d/1pX6F_FEWe3Lm577fZDVoN6fKmE3Lskn5/view?usp=sharing
-
-export CEF_VERSION=cef_binary_84.4.1+gfdc7504+chromium-84.0.4147.105
+# Lê a versão correta do arquivo version.txt que criamos na raiz do projeto
+if [ -f "$SCRIPTPATH/version.txt" ]; then
+	export CEF_VERSION="cef_binary_$(cat $SCRIPTPATH/version.txt)"
+else
+	export CEF_VERSION="cef_binary_84.4.1+gfdc7504+chromium-84.0.4147.105"
+fi
 
 cd third_party/cef
 FILENAME=${CEF_VERSION}_linux64
-FILEID=1pX6F_FEWe3Lm577fZDVoN6fKmE3Lskn5
-if [[ ! -d "$FILENAME" ]]; then
-	if [[ ! -f "$FILENAME.zip" ]]; then
-		sh $SCRIPTPATH/gdrive-download.sh "$FILEID" "$FILENAME.zip"
+
+# Se o diretório da versão não existir, baixa do repositório oficial do CEF (Spotify)
+if [ ! -d "$FILENAME" ]; then
+	if [ ! -f "$FILENAME.tar.bz2" ]; then
+		echo "Baixando $FILENAME.tar.bz2 do servidor do CEF..."
+		curl -O "https://cef-builds.spotifycdn.com/${FILENAME}.tar.bz2"
 	fi
-	unzip "$FILENAME.zip"
+	echo "Extraindo arquivos do CEF..."
+	tar -xvjf "${FILENAME}.tar.bz2"
 fi
 
 cd ../..
@@ -75,4 +82,3 @@ if [ ! -d $SCRIPTPATH/dist ]; then
 	mkdir $SCRIPTPATH/dist
 fi
 mv cef-linux$arch.zip $SCRIPTPATH/dist/
-
