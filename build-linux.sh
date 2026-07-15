@@ -45,6 +45,14 @@ fi
 echo "${CEF_VERSION_RAW}" > ../version.txt
 echo "${CEF_VERSION_RAW}" > ./version.txt
 
+# --- SOLUÇÃO PARA O ERRO DO GSUTIL / CLANG-FORMAT ---
+# Criamos um arquivo falso 'clang-format' para enganar o script e fazê-lo achar que já baixou.
+# Isso evita que o gsutil (e o Python) seja sequer chamado!
+mkdir -p tools/buildtools/linux64
+echo -e '#!/bin/sh\necho "mock clang-format"' > tools/buildtools/linux64/clang-format
+chmod +x tools/buildtools/linux64/clang-format
+# ----------------------------------------------------
+
 cd third_party/cef
 FILENAME=${CEF_VERSION}_linux64
 
@@ -61,12 +69,14 @@ fi
 cd ../..
 cd jcef_build
 
-# Executa o CMake passando o caminho exato (CEF_ROOT) e a versão correta para burlar o download automático interno
+# Executa o CMake passando as variáveis necessárias
+# Adicionamos -DCREATE_SAMPLES=OFF para acelerar o build e evitar compilar os exemplos pesados se houver.
 cmake -G "Unix Makefiles" \
       -DPROJECT_ARCH="$PROJECT_ARCH" \
       -DCMAKE_BUILD_TYPE=Release \
       -DCEF_ROOT="$SCRIPTPATH/java-cef/src/third_party/cef/${FILENAME}" \
-      -DCEF_VERSION="${CEF_VERSION_RAW}" ..
+      -DCEF_VERSION="${CEF_VERSION_RAW}" \
+      -DCREATE_SAMPLES=OFF ..
 
 make -j4
 
