@@ -21,15 +21,20 @@ jobs:
             libgtk-3-dev \
             libgtkglext1-dev \
             python3 \
-            python3-pip
+            python3-pip \
+            python3-six
           
-          # Instala a biblioteca "six" necessária para os scripts internos de build do Chromium/gsutil
-          python3 -m pip install --break-system-packages six || python3 -m pip install six
+          # Garante a instalação do six via pip no escopo do sistema e do usuário
+          python3 -m pip install --break-system-packages six || true
+          python3 -m pip install --user --break-system-packages six || true
 
       - name: Rodar o Build do Linux
         run: |
           # Define as variáveis para garantir que o script prepare os codecs proprietários
           export GN_DEFINES="proprietary_codecs=true ffmpeg_branding=\"Chrome\" is_official_build=true symbol_level=0"
+          
+          # Força o Python a procurar bibliotecas na pasta global e de usuário (resolve o erro do gsutil)
+          export PYTHONPATH="/usr/lib/python3/dist-packages:/usr/local/lib/python3.10/dist-packages:$HOME/.local/lib/python3.10/site-packages"
           
           # Dá permissão de execução
           chmod +x ./build-linux.sh
