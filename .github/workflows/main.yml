@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Instalar Dependências
         run: |
@@ -38,7 +38,7 @@ jobs:
           bash ./build-linux.sh
 
       - name: Upload do Artifact (Resultado)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cef-linux64-proprietario
           path: dist/cef-linux64.zip
