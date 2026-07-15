@@ -1,0 +1,34 @@
+name: Compilar CEF com Codecs Proprietários
+
+on:
+  workflow_dispatch: # Permite que você clique em um botão para iniciar o build manualmente
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-20.04 # Ajustado para garantir compatibilidade com o Ubuntu 20.04 LTS
+    steps:
+      - name: Checkout do código do seu repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar Dependências do Linux necessárias para o Chromium
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 bison flex ninja-build git-core curl
+
+      - name: Rodar o Build com as Flags de Vídeo Ativas
+        run: |
+          # 1. Configura as variáveis de ambiente do Chromium para habilitar os codecs
+          export GN_DEFINES="proprietary_codecs=true ffmpeg_branding=\"Chrome\" is_official_build=true symbol_level=0"
+          
+          # 2. Executa o script que está na pasta do projeto que você forkou
+          chmod +x ./cef/script/build.sh
+          ./cef/script/build.sh
+
+      - name: Salvar os Arquivos Compilados (libcef.so e recursos)
+        uses: actions/upload-artifact@v4
+        with:
+          name: cef-linux-x64-fixed
+          path: |
+            **/libcef.so
+            **/*.pak
+            **/*.bin
